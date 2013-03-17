@@ -3,7 +3,7 @@
 Gemfile.lock
 pkg/*
 .DS_STORE
-
+.project
 spec/redis.config.yml
 bundle
 spec/tmp
