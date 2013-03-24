@@ -297,9 +297,6 @@ module Qless
     end
 
     def procline(value)
->>>>>>> refs/remotes/origin/master
-=======
->>>>>>> origin/master
       $0 = "Qless-#{Qless::VERSION}: #{value} at #{Time.now.iso8601}"
       log! $0
     end
