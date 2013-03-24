@@ -182,9 +182,6 @@ module Qless
     end
 
     def procline(value)
-<<<<<<< HEAD
-      $stderr << value << "\n"
-=======
       procline "Starting #{@job_reserver.description}"
       register_signal_handlers
 
