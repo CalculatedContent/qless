@@ -67,6 +67,7 @@ module Qless
     end
 
     def work(interval = 5.0)
+<<<<<<< HEAD
       log "Starting #{@job_reserver.description}"
  
       procline "Starting #{@job_reserver.description}"
@@ -185,6 +186,123 @@ module Qless
 
     def procline(value)
       $stderr << value << "\n"
+=======
+      procline "Starting #{@job_reserver.description}"
+      register_signal_handlers
+
+      loop do
+        break if shutdown?
+        if paused?
+          sleep interval
+          next
+        end
+
+        unless job = @job_reserver.reserve
+          break if interval.zero?
+          procline "Waiting for #{@job_reserver.description}"
+          log! "Sleeping for #{interval} seconds"
+          sleep interval
+          next
+        end
+
+        log "got: #{job.inspect}"
+
+        if run_as_single_process
+          # We're staying in the same process
+          procline "Single processing #{job.description}"
+          perform(job)
+        elsif @child = fork
+          # We're in the parent process
+          procline "Forked #{@child} for #{job.description}"
+          Process.wait(@child)
+        else
+          # We're in the child process
+          procline "Processing #{job.description}"
+          job.reconnect_to_redis
+          perform(job)
+          exit!
+        end
+      end
+    end
+
+    def perform(job)
+      around_perform(job)
+    rescue *retryable_exception_classes(job)
+      job.retry
+    rescue Exception => error
+      fail_job(job, error)
+    else
+      try_complete(job)
+    end
+
+    def shutdown
+      @shutdown = true
+    end
+
+    def shutdown!
+      shutdown
+      kill_child unless run_as_single_process
+    end
+
+    def shutdown?
+      @shutdown
+    end
+
+    def paused?
+      @paused
+    end
+
+    def pause_processing
+      log "USR2 received; pausing job processing"
+      @paused = true
+      procline "Paused -- #{@job_reserver.description}"
+    end
+
+    def unpause_processing
+      log "CONT received; resuming job processing"
+      @paused = false
+    end
+
+  private
+
+    def retryable_exception_classes(job)
+      return [] unless job.klass.respond_to?(:retryable_exception_classes)
+      job.klass.retryable_exception_classes
+    rescue NameError => exn
+      []
+    end
+
+    def try_complete(job)
+      job.complete unless job.state_changed?
+    rescue Job::CantCompleteError => e
+      # There's not much we can do here. Complete fails in a few cases:
+      #   - The job is already failed (i.e. by another worker)
+      #   - The job is being worked on by another worker
+      #   - The job has been cancelled
+      #
+      # We don't want to (or are able to) fail the job with this error in
+      # any of these cases, so the best we can do is log the failure.
+      log "Failed to complete #{job.inspect}: #{e.message}"
+    end
+
+    # Allow middleware modules to be mixed in and override the
+    # definition of around_perform while providing a default
+    # implementation so our code can assume the method is present.
+    include Module.new {
+      def around_perform(job)
+        job.perform
+      end
+    }
+
+    def fail_job(job, error)
+      group = "#{job.klass_name}:#{error.class}"
+      message = "#{error.message}\n\n#{error.backtrace.join("\n")}"
+      log "Got #{group} failure from #{job.inspect}"
+      job.fail(group, message)
+    end
+
+    def procline(value)
+>>>>>>> refs/remotes/origin/master
       $0 = "Qless-#{Qless::VERSION}: #{value} at #{Time.now.iso8601}"
       log! $0
     end
