@@ -4,6 +4,7 @@ Gemfile.lock
 pkg/*
 .DS_STORE
 .project
+.rvmrc
 spec/redis.config.yml
 bundle
 spec/tmp

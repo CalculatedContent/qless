@@ -67,6 +67,8 @@ module Qless
     end
 
     def work(interval = 5.0)
+      log "Starting #{@job_reserver.description}"
+ 
       procline "Starting #{@job_reserver.description}"
       register_signal_handlers
 
@@ -182,6 +184,7 @@ module Qless
     end
 
     def procline(value)
+      $stderr << value << "\n"
       $0 = "Qless-#{Qless::VERSION}: #{value} at #{Time.now.iso8601}"
       log! $0
     end
