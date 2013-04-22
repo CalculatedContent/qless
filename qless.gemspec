@@ -20,6 +20,8 @@ Gem::Specification.new do |s|
     without sacrificing performance and not requiring a lot of logic
     replication between clients. Keep the Lua scripts updated, and your
     language-specific extension will also remain up to date.
+    
+    Updated by CC to work with ruby 1.9.3, redis 3.0, and other gems
   }
 
   s.rubyforge_project = "qless"
